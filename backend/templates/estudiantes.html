@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="top"><div><h1>ABM de estudiantes</h1><div class="hint">Alta, modificación y baja lógica de estudiantes.</div></div></div>
+<div class="grid">
+  <div class="card">
+    <h2>Nuevo estudiante</h2>
+    <form class="form" method="post">
+      <input name="documento" placeholder="Documento" required pattern="[0-9]{6,8}">
+      <div class="row"><input name="nombre" placeholder="Nombre" required><input name="apellido" placeholder="Apellido" required></div>
+      <input name="correo" type="email" placeholder="correo@ucu.edu.uy" required>
+      <select name="id_carrera" required><option value="">Carrera</option>{% for c in carreras %}<option value="{{c.id_carrera}}">{{c.facultad}} - {{c.nombre}}</option>{% endfor %}</select>
+      <button class="btn">Crear estudiante</button>
+      <div class="small">También se crea login con contraseña temporal <b>usuario123</b>.</div>
+    </form>
+  </div>
+  <div class="card table-wrap">
+    <h2>Estudiantes</h2>
+    <table class="table"><thead><tr><th>Doc.</th><th>Nombre</th><th>Correo</th><th>Carrera</th><th>Estado</th><th>Editar</th></tr></thead><tbody>
+    {% for e in estudiantes %}
+    <tr>
+      <form method="post" action="{{ url_for('estudiantes_actualizar', documento=e.documento) }}">
+      <td>{{e.documento}}</td>
+      <td><input name="nombre" value="{{e.nombre}}" required><input name="apellido" value="{{e.apellido}}" required></td>
+      <td><input name="correo" type="email" value="{{e.correo}}" required></td>
+      <td><select name="id_carrera">{% for c in carreras %}<option value="{{c.id_carrera}}" {% if c.nombre==e.carrera %}selected{% endif %}>{{c.nombre}}</option>{% endfor %}</select></td>
+      <td><select name="estado"><option {% if e.estado=='activo' %}selected{% endif %}>activo</option><option {% if e.estado=='inactivo' %}selected{% endif %}>inactivo</option></select></td>
+      <td class="actions"><button class="btn secondary">Guardar</button></form><form method="post" action="{{ url_for('estudiantes_baja', documento=e.documento) }}"><button class="btn danger">Baja</button></form></td>
+    </tr>
+    {% endfor %}</tbody></table>
+  </div>
+</div>
+{% endblock %}

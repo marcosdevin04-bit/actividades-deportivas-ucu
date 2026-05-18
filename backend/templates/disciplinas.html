@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="top"><div><h1>ABM de disciplinas</h1><div class="hint">Fútbol, básquetbol, atletismo, yoga, funcional, etc.</div></div></div>
+<div class="grid"><div class="card"><h2>Nueva disciplina</h2><form class="form" method="post"><input name="nombre" placeholder="Nombre" required><textarea name="descripcion" placeholder="Descripción"></textarea><button class="btn">Crear</button></form></div>
+<div class="card table-wrap"><h2>Disciplinas</h2><table class="table"><thead><tr><th>Nombre</th><th>Descripción</th><th>Estado</th><th></th></tr></thead><tbody>{% for d in disciplinas %}<tr><form method="post" action="{{ url_for('disciplinas_actualizar', id_disciplina=d.id_disciplina) }}"><td><input name="nombre" value="{{d.nombre}}"></td><td><input name="descripcion" value="{{d.descripcion or ''}}"></td><td><select name="estado"><option {% if d.estado=='activa' %}selected{% endif %}>activa</option><option {% if d.estado=='inactiva' %}selected{% endif %}>inactiva</option></select></td><td><button class="btn secondary">Guardar</button></td></form></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

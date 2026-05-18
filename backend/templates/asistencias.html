@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="top"><div><h1>Registro de asistencias</h1><div class="hint">Solo permite registrar asistencia de inscripciones confirmadas.</div></div></div>
+<div class="grid"><div class="card"><h2>Nueva asistencia</h2><form class="form" method="post"><select name="id_inscripcion" required><option value="">Inscripción confirmada</option>{% for i in confirmadas %}<option value="{{i.id_inscripcion}}">{{i.actividad}} - {{i.documento}} {{i.nombre}} {{i.apellido}}</option>{% endfor %}</select><input name="fecha" type="date" required><select name="presente"><option value="1">Presente</option><option value="0">Ausente</option></select><textarea name="observacion" placeholder="Observación"></textarea><button class="btn">Registrar asistencia</button></form></div>
+<div class="card table-wrap"><h2>Asistencias registradas</h2><table class="table"><thead><tr><th>Fecha</th><th>Actividad</th><th>Estudiante</th><th>Estado</th><th>Obs.</th></tr></thead><tbody>{% for a in asistencias %}<tr><td>{{a.fecha}}</td><td>{{a.actividad}}</td><td>{{a.documento}} - {{a.nombre}} {{a.apellido}}</td><td>{% if a.presente %}<span class="badge ok">Presente</span>{% else %}<span class="badge bad">Ausente</span>{% endif %}</td><td>{{a.observacion or ''}}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

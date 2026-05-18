@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="top"><div><h1>ABM de espacios deportivos</h1><div class="hint">Espacios con ubicación, capacidad y estado.</div></div></div>
+<div class="grid"><div class="card"><h2>Nuevo espacio</h2><form class="form" method="post"><input name="nombre" placeholder="Nombre" required><input name="ubicacion" placeholder="Ubicación" required><input name="capacidad" type="number" min="1" placeholder="Capacidad" required><button class="btn">Crear</button></form></div>
+<div class="card table-wrap"><h2>Espacios</h2><table class="table"><thead><tr><th>Nombre</th><th>Ubicación</th><th>Capacidad</th><th>Estado</th><th></th></tr></thead><tbody>{% for e in espacios %}<tr><form method="post" action="{{ url_for('espacios_actualizar', id_espacio=e.id_espacio) }}"><td><input name="nombre" value="{{e.nombre}}"></td><td><input name="ubicacion" value="{{e.ubicacion}}"></td><td><input name="capacidad" type="number" min="1" value="{{e.capacidad}}"></td><td><select name="estado"><option {% if e.estado=='activo' %}selected{% endif %}>activo</option><option {% if e.estado=='inactivo' %}selected{% endif %}>inactivo</option></select></td><td><button class="btn secondary">Guardar</button></td></form></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

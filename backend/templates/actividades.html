@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="top"><div><h1>ABM de actividades deportivas</h1><div class="hint">Nombre, disciplina, espacio, cupo, día, horario y estado.</div></div></div>
+<div class="grid">
+<div class="card"><h2>Nueva actividad</h2><form class="form" method="post">
+<input name="nombre" placeholder="Nombre" required>
+<select name="id_disciplina" required><option value="">Disciplina</option>{% for d in disciplinas if d.estado=='activa' %}<option value="{{d.id_disciplina}}">{{d.nombre}}</option>{% endfor %}</select>
+<select name="id_espacio" required><option value="">Espacio</option>{% for e in espacios if e.estado=='activo' %}<option value="{{e.id_espacio}}">{{e.nombre}} / cap. {{e.capacidad}}</option>{% endfor %}</select>
+<div class="row"><input name="cupo_maximo" type="number" min="1" placeholder="Cupo máximo" required><select name="dia_semana">{% for d in dias %}<option>{{d}}</option>{% endfor %}</select></div>
+<div class="row"><input name="hora_inicio" type="time" required><input name="hora_fin" type="time" required></div>
+<select name="estado">{% for e in estados %}<option>{{e}}</option>{% endfor %}</select>
+<button class="btn">Crear actividad</button>
+</form></div>
+<div class="card table-wrap"><h2>Actividades</h2><table class="table"><thead><tr><th>Actividad</th><th>Disciplina/Espacio</th><th>Cupo</th><th>Horario</th><th>Estado</th><th>Editar</th></tr></thead><tbody>{% for a in actividades %}<tr><form method="post" action="{{ url_for('actividades_actualizar', id_actividad=a.id_actividad) }}"><td><input name="nombre" value="{{a.nombre}}"></td><td><select name="id_disciplina">{% for d in disciplinas %}<option value="{{d.id_disciplina}}" {% if d.id_disciplina==a.id_disciplina %}selected{% endif %}>{{d.nombre}}</option>{% endfor %}</select><select name="id_espacio">{% for e in espacios %}<option value="{{e.id_espacio}}" {% if e.id_espacio==a.id_espacio %}selected{% endif %}>{{e.nombre}}</option>{% endfor %}</select></td><td><input name="cupo_maximo" type="number" min="1" value="{{a.cupo_maximo}}"><div class="small">Conf: {{a.confirmados}} / Espera: {{a.en_espera}}</div></td><td><select name="dia_semana">{% for d in dias %}<option {% if d==a.dia_semana %}selected{% endif %}>{{d}}</option>{% endfor %}</select><div class="row"><input name="hora_inicio" type="time" value="{{a.hora_inicio}}"><input name="hora_fin" type="time" value="{{a.hora_fin}}"></div></td><td><select name="estado">{% for e in estados %}<option {% if e==a.estado %}selected{% endif %}>{{e}}</option>{% endfor %}</select></td><td><button class="btn secondary">Guardar</button></td></form></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endblock %}

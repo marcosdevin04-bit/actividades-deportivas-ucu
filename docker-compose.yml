@@ -1,0 +1,40 @@
+services:
+  app:
+    build: .
+    container_name: deportes_ucu_app
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: app_deportes
+      DB_PASSWORD: app_deportes_2026
+      DB_NAME: actividades_deportivas
+      FLASK_ENV: development
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    command: ["python", "backend/app.py"]
+
+  mysql:
+    image: mysql:8.0
+    container_name: deportes_ucu_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: deportesucu2026_root
+      MYSQL_DATABASE: actividades_deportivas
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_deportes_data:/var/lib/mysql
+      - ./db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-hlocalhost", "-uroot", "-pdeportesucu2026_root"]
+      interval: 5s
+      timeout: 10s
+      retries: 15
+      start_period: 15s
+
+volumes:
+  mysql_deportes_data:

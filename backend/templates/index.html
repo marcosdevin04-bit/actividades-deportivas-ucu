@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="top">
+  <div>
+    <h1>Panel principal</h1>
+    <div class="hint">Resumen operativo para defensa: estudiantes, actividades, cupos e inscripciones.</div>
+  </div>
+</div>
+<section class="cards">
+  <div class="card"><div class="stat">{{ stats.estudiantes }}</div><div class="stat-label">Estudiantes activos</div></div>
+  <div class="card"><div class="stat">{{ stats.actividades }}</div><div class="stat-label">Actividades</div></div>
+  <div class="card"><div class="stat">{{ stats.abiertas }}</div><div class="stat-label">Abiertas</div></div>
+  <div class="card"><div class="stat">{{ stats.confirmadas }}</div><div class="stat-label">Inscripciones confirmadas</div></div>
+  <div class="card"><div class="stat">{{ stats.espera }}</div><div class="stat-label">Lista de espera</div></div>
+</section>
+<div class="card">
+  <h2>Actividades abiertas</h2>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Actividad</th><th>Disciplina</th><th>Espacio</th><th>Día</th><th>Horario</th><th>Cupos</th><th>Estado</th></tr></thead>
+      <tbody>
+      {% for a in actividades %}
+        <tr><td>{{ a.nombre }}</td><td>{{ a.disciplina }}</td><td>{{ a.espacio }}</td><td>{{ a.dia_semana }}</td><td>{{ a.hora_inicio }} - {{ a.hora_fin }}</td><td>{{ a.confirmados }}/{{ a.cupo_maximo }}</td><td><span class="badge ok">{{ a.estado }}</span></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

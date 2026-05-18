@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% macro table(rows) -%}
+<div class="table-wrap"><table class="table"><thead>{% if rows and rows|length > 0 %}<tr>{% for k in rows[0].keys() %}<th>{{k}}</th>{% endfor %}</tr>{% endif %}</thead><tbody>{% for r in rows %}<tr>{% for v in r.values() %}<td>{{v}}</td>{% endfor %}</tr>{% else %}<tr><td>Sin datos para mostrar</td></tr>{% endfor %}</tbody></table></div>
+{%- endmacro %}
+{% block content %}
+<div class="top"><div><h1>Reportes</h1><div class="hint">Incluye los 7 reportes obligatorios y 3 adicionales propuestos.</div></div></div>
+<div class="report-grid">
+  <div class="card"><h2>1. Actividades con mayor cantidad de confirmados</h2>{{ table(reportes.mas_inscriptos) }}</div>
+  <div class="card"><h2>2. Actividades con cupos disponibles</h2>{{ table(reportes.cupos) }}</div>
+  <div class="card"><h2>3. Inscriptos por disciplina</h2>{{ table(reportes.por_disciplina) }}</div>
+  <div class="card"><h2>4. Inscriptos por carrera y facultad</h2>{{ table(reportes.por_carrera) }}</div>
+  <div class="card"><h2>5. Porcentaje de ocupación</h2>{{ table(reportes.ocupacion) }}</div>
+  <div class="card"><h2>6. Porcentaje de asistencia</h2>{{ table(reportes.asistencia) }}</div>
+  <div class="card"><h2>7. Estudiantes con 3 o más inasistencias</h2>{{ table(reportes.inasistencias) }}</div>
+  <div class="card"><h2>8. Lista de espera por actividad</h2>{{ table(reportes.lista_espera) }}</div>
+  <div class="card"><h2>9. Actividades por espacio y estado</h2>{{ table(reportes.por_espacio_estado) }}</div>
+  <div class="card"><h2>10. Estudiantes sin confirmadas</h2>{{ table(reportes.sin_confirmadas) }}</div>
+</div>
+{% endblock %}
