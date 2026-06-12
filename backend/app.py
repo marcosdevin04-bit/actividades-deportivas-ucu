@@ -4,7 +4,7 @@ from functools import wraps
 from mysql.connector import Error
 import services as svc
 
-app = Flask(__name__)
+app = Flask(__name__,template_folder="../frontend/templates",static_folder="../frontend/static")
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "deportes-ucu-2026-secret")
 
 
