@@ -166,3 +166,44 @@ BEGIN
     END IF;
 END$$
 DELIMITER ;
+
+
+DELIMITER $$
+
+CREATE TRIGGER trg_validar_capacidad_actividad_insert
+BEFORE INSERT ON actividad_deportiva
+FOR EACH ROW
+BEGIN
+    DECLARE v_capacidad INT;
+
+    SELECT capacidad
+    INTO v_capacidad
+    FROM espacio_deportivo
+    WHERE id_espacio = NEW.id_espacio;
+
+    IF NEW.cupo_maximo > v_capacidad THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT =
+            'El cupo máximo no puede superar la capacidad del espacio.';
+    END IF;
+END$$
+
+CREATE TRIGGER trg_validar_capacidad_actividad_update
+BEFORE UPDATE ON actividad_deportiva
+FOR EACH ROW
+BEGIN
+    DECLARE v_capacidad INT;
+
+    SELECT capacidad
+    INTO v_capacidad
+    FROM espacio_deportivo
+    WHERE id_espacio = NEW.id_espacio;
+
+    IF NEW.cupo_maximo > v_capacidad THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT =
+            'El cupo máximo no puede superar la capacidad del espacio.';
+    END IF;
+END$$
+
+DELIMITER ;

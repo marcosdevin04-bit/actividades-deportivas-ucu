@@ -47,28 +47,154 @@ def estudiantes():
         JOIN facultad f ON c.id_facultad = f.id_facultad
         ORDER BY e.estado, e.apellido, e.nombre
     """)
+import re
 
+def validar_nombre(valor, campo):
+    valor = valor.strip()
+
+    if not valor:
+        raise ValueError(f"El {campo} es obligatorio.")
+
+    if not re.fullmatch(
+        r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]{2,60}",
+        valor
+    ):
+        raise ValueError(
+            f"El {campo} solo puede contener letras, espacios, guiones y apóstrofes."
+        )
+
+    return valor
+
+def validar_correo_ucu(correo):
+    correo = correo.strip().lower()
+
+    dominios_validos = (
+        "@ucu.edu.uy",
+        "@correo.ucu.edu.uy"
+    )
+
+    if not correo.endswith(dominios_validos):
+        raise ValueError(
+            "El correo debe pertenecer a un dominio institucional UCU."
+        )
+
+    return correo
 
 def crear_estudiante(form):
-    execute("""
-        INSERT INTO estudiante (documento, nombre, apellido, correo, id_carrera)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (form["documento"], form["nombre"].strip(), form["apellido"].strip(),
-          form["correo"].strip(), form["id_carrera"]))
-    # Login con contraseña hasheada
-    execute("""
-        INSERT INTO login (correo, contrasena, rol, documento_estudiante, debe_cambiar_contrasena)
-        VALUES (%s, %s, 'estudiante', %s, FALSE)
-    """, (form["correo"].strip(), hashear("usuario123"), form["documento"]))
+    correo = validar_correo_ucu(form["correo"])
+    nombre = validar_nombre(form["nombre"], "nombre")
+    apellido = validar_nombre(form["apellido"], "apellido")
+
+    documento = int(form["documento"])
+
+    if documento <= 0:
+        raise ValueError("El documento debe ser mayor que cero.")
+
+    conn = get_connection()
+    cur = conn.cursor(dictionary=True)
+
+    try:
+        cur.execute("""
+            INSERT INTO estudiante (
+                documento,
+                nombre,
+                apellido,
+                correo,
+                id_carrera
+            )
+            VALUES (%s, %s, %s, %s, %s)
+        """, (
+            documento,
+            nombre,
+            apellido,
+            correo,
+            form["id_carrera"]
+        ))
+
+        cur.execute("""
+            INSERT INTO login (
+                correo,
+                contrasena,
+                rol,
+                documento_estudiante,
+                debe_cambiar_contrasena
+            )
+            VALUES (%s, %s, 'estudiante', %s, FALSE)
+        """, (
+            correo,
+            hashear("usuario123"),
+            documento
+        ))
+
+        conn.commit()
+
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
+        cur.close()
+        conn.close()
 
 
 def actualizar_estudiante(documento, form):
-    execute("""
-        UPDATE estudiante SET nombre=%s, apellido=%s, correo=%s, id_carrera=%s, estado=%s
-        WHERE documento=%s
-    """, (form["nombre"].strip(), form["apellido"].strip(), form["correo"].strip(),
-          form["id_carrera"], form["estado"], documento))
+    correo_nuevo = validar_correo_ucu(form["correo"])
+    nombre = validar_nombre(form["nombre"], "nombre")
+    apellido = validar_nombre(form["apellido"], "apellido")
 
+    conn = get_connection()
+    cur = conn.cursor(dictionary=True)
+
+    try:
+        cur.execute("""
+            SELECT correo
+            FROM estudiante
+            WHERE documento = %s
+        """, (documento,))
+
+        estudiante = cur.fetchone()
+
+        if not estudiante:
+            raise ValueError("El estudiante no existe.")
+
+        correo_anterior = estudiante["correo"]
+
+        cur.execute("""
+            UPDATE estudiante
+            SET nombre = %s,
+                apellido = %s,
+                correo = %s,
+                id_carrera = %s,
+                estado = %s
+            WHERE documento = %s
+        """, (
+            nombre,
+            apellido,
+            correo_nuevo,
+            form["id_carrera"],
+            form["estado"],
+            documento
+        ))
+
+        if correo_nuevo != correo_anterior:
+            cur.execute("""
+                UPDATE login
+                SET correo = %s
+                WHERE documento_estudiante = %s
+            """, (
+                correo_nuevo,
+                documento
+            ))
+
+        conn.commit()
+
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
+        cur.close()
+        conn.close()
 
 def baja_estudiante(documento):
     execute("UPDATE estudiante SET estado='inactivo' WHERE documento=%s", (documento,))
@@ -133,26 +259,106 @@ def actividades(estado=None):
         ORDER BY FIELD(a.dia_semana,'lunes','martes','miercoles','jueves','viernes','sabado','domingo'), a.hora_inicio
     """, params)
 
+def validar_cupo_espacio(id_espacio, cupo_maximo):
+    espacio = fetch_one("""
+        SELECT capacidad, estado
+        FROM espacio_deportivo
+        WHERE id_espacio = %s
+    """, (id_espacio,))
+
+    if not espacio:
+        raise ValueError("El espacio seleccionado no existe.")
+
+    if espacio["estado"] != "activo":
+        raise ValueError("No se puede usar un espacio inactivo.")
+
+    cupo_maximo = int(cupo_maximo)
+
+    if cupo_maximo <= 0:
+        raise ValueError("El cupo máximo debe ser mayor que cero.")
+
+    if cupo_maximo > espacio["capacidad"]:
+        raise ValueError(
+            f"El cupo máximo no puede superar la capacidad del espacio "
+            f"({espacio['capacidad']} personas)."
+        )
+
+    return cupo_maximo
+
 
 def crear_actividad(form):
+    cupo = validar_cupo_espacio(
+        form["id_espacio"],
+        form["cupo_maximo"]
+    )
+
+    if form["hora_fin"] <= form["hora_inicio"]:
+        raise ValueError(
+            "La hora de fin debe ser posterior a la hora de inicio."
+        )
+
     execute("""
         INSERT INTO actividad_deportiva
-            (nombre, id_disciplina, id_espacio, cupo_maximo, dia_semana, hora_inicio, hora_fin, estado)
+            (nombre, id_disciplina, id_espacio, cupo_maximo,
+             dia_semana, hora_inicio, hora_fin, estado)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-    """, (form["nombre"].strip(), form["id_disciplina"], form["id_espacio"],
-          form["cupo_maximo"], form["dia_semana"],
-          form["hora_inicio"], form["hora_fin"], form["estado"]))
-
+    """, (
+        form["nombre"].strip(),
+        form["id_disciplina"],
+        form["id_espacio"],
+        cupo,
+        form["dia_semana"],
+        form["hora_inicio"],
+        form["hora_fin"],
+        form["estado"]
+    ))
 
 def actualizar_actividad(id_actividad, form):
+    cupo = validar_cupo_espacio(
+        form["id_espacio"],
+        form["cupo_maximo"]
+    )
+
+    if form["hora_fin"] <= form["hora_inicio"]:
+        raise ValueError(
+            "La hora de fin debe ser posterior a la hora de inicio."
+        )
+
+    confirmados = fetch_one("""
+        SELECT COUNT(*) AS total
+        FROM inscripcion
+        WHERE id_actividad = %s
+          AND estado = 'confirmada'
+    """, (id_actividad,))["total"]
+
+    if cupo < confirmados:
+        raise ValueError(
+            f"El cupo no puede reducirse por debajo de los "
+            f"{confirmados} estudiantes confirmados."
+        )
+
     execute("""
         UPDATE actividad_deportiva
-        SET nombre=%s, id_disciplina=%s, id_espacio=%s, cupo_maximo=%s,
-            dia_semana=%s, hora_inicio=%s, hora_fin=%s, estado=%s
+        SET nombre=%s,
+            id_disciplina=%s,
+            id_espacio=%s,
+            cupo_maximo=%s,
+            dia_semana=%s,
+            hora_inicio=%s,
+            hora_fin=%s,
+            estado=%s
         WHERE id_actividad=%s
-    """, (form["nombre"], form["id_disciplina"], form["id_espacio"], form["cupo_maximo"],
-          form["dia_semana"], form["hora_inicio"], form["hora_fin"], form["estado"],
-          id_actividad))
+    """, (
+        form["nombre"].strip(),
+        form["id_disciplina"],
+        form["id_espacio"],
+        cupo,
+        form["dia_semana"],
+        form["hora_inicio"],
+        form["hora_fin"],
+        form["estado"],
+        id_actividad
+    ))
 
 
 # ─── INSCRIPCIONES ────────────────────────────────────────────────────────────

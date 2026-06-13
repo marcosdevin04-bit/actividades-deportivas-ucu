@@ -58,14 +58,54 @@ def logout():
 def safe_action(success_msg, redirect_endpoint, action):
     try:
         result = action()
-        msg = f"{success_msg}"
+        msg = success_msg
+
         if isinstance(result, str) and result:
             msg += f" ({result})"
-        flash(msg, "success")
-    except (Error, ValueError) as exc:
-        flash(str(exc), "danger")
-    return redirect(url_for(redirect_endpoint))
 
+        flash(msg, "success")
+
+    except ValueError as exc:
+        flash(str(exc), "danger")
+
+    except Error as exc:
+        mensaje = str(exc)
+
+        if exc.errno == 1062:
+            if "estudiante.correo" in mensaje:
+                flash(
+                    "Ya existe un estudiante con ese correo.",
+                    "danger"
+                )
+            elif "estudiante.PRIMARY" in mensaje:
+                flash(
+                    "Ya existe un estudiante con ese documento.",
+                    "danger"
+                )
+            elif "uq_estudiante_actividad" in mensaje:
+                flash(
+                    "El estudiante ya está inscripto en esta actividad.",
+                    "danger"
+                )
+            else:
+                flash(
+                    "Ya existe un registro con esos datos.",
+                    "danger"
+                )
+
+        elif exc.errno == 3819:
+            flash(
+                "Los datos ingresados no cumplen las reglas del sistema.",
+                "danger"
+            )
+
+        else:
+            flash(
+                "No se pudo completar la operación. Revisá los datos ingresados.",
+                "danger"
+            )
+
+    return redirect(url_for(redirect_endpoint))
 
 # ─── DASHBOARD ────────────────────────────────────────────────────────────────
 
